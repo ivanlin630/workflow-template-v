@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# SessionStart hook：依 $SESSION_ROLE 注入角色 context。
+# 開窗：  SESSION_ROLE=systems claude   或   SESSION_ROLE=blueprint claude
+# (PowerShell: $env:SESSION_ROLE='systems'; claude)
+emit() { printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}' "$1"; }
+# 多行安全：escape \ → " → 換行(\n)，再包雙引號
+json_str() { printf '%s' "$1" | sed ':a;N;$!ba;s/\\/\\\\/g; s/"/\\"/g; s/\n/\\n/g' | awk 'BEGIN{printf "\""} {printf "%s",$0} END{printf "\""}'; }
+
+# ★唯一信箱 = main repo 的 handbacks（worktree session 也指這，共用實體資料夾）。
+_MAIN_REPO="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" 2>/dev/null)"
+HANDBACK_DIR="${_MAIN_REPO:-${CLAUDE_PROJECT_DIR:-.}}/docs/superpowers/handbacks"
+
+# 掃 to:<role> + status:open 的 handback（並行 session 不能直接對話，靠開頭掃 dir 不漏訊）
+scan_handbacks() {
+  local role="$1" out="" f head topic
+  shopt -s nullglob
+  for f in "$HANDBACK_DIR"/*.md; do
+    head=$(sed -n '1,10p' "$f")
+    if printf '%s\n' "$head" | grep -qiE "^to:[[:space:]]*${role}([[:space:]]|$)" \
+       && printf '%s\n' "$head" | grep -qiE "^status:[[:space:]]*open([[:space:]]|$)"; then
+      topic=$(printf '%s\n' "$head" | grep -iE '^topic:' | head -n1 | sed 's/^[Tt]opic:[[:space:]]*//')
+      out="${out}
+- $(basename "$f"): ${topic}"
+    fi
+  done
+  printf '%s' "$out"
+}
+
+CTX=""
+ROLE_KEY=""
+case "${SESSION_ROLE:-}" in
+  systems|系統)
+    ROLE_KEY="systems"
+    CTX='你是「系統」(Systems, HOW) session。讀 CLAUDE.md + docs/process/00_roles.md + 01_architect.md（HOW 職責/spec/plan 本體）。管 seam/契約/所有權圖/invariant/tick pipeline/行政流程。owner = invariants.md / 流程docs / progress.md / known_issues.md / CLAUDE.md / docs/process/* / auto-memory(單寫者)。不碰 game-design.md(藍圖 owner)。' ;;
+  blueprint|藍圖)
+    ROLE_KEY="blueprint"
+    CTX='你是「藍圖」(Blueprint, WHAT) session。讀 CLAUDE.md + docs/process/00_roles.md（角色/邊界）+ docs/game-design.md（你 owner；00-04 無藍圖專屬流程 doc）。管 遊戲願景/feature/玩家循環/平衡意圖。owner = game-design.md + feature/願景 docs。不碰 架構/invariant/流程/code。auto-memory 只讀不寫,教訓走 handback 交系統提煉。' ;;
+  qa|QA|驗收)
+    ROLE_KEY="qa"
+    CTX='你是「QA 驗收官」session。讀 docs/process/00_roles.md + 04_qa.md（四職判決）+ 05_acceptance.md（交付前驗收鏈）。管 判決 + release gate:三層機器(矛盾偵測/常駐漏斗/世界句子審計)全綠 + QA 判決才交付。escaped_defects ledger。auto-memory 只讀不寫,教訓走 handback 交系統。不改願景/架構/code。' ;;
+  implementer|實作)
+    ROLE_KEY="implementer"
+    CTX='你是「實作」(Implementer)。讀 docs/process/03_implementer.md + 00_roles.md。在 worktree 照 systems 的 plan(docs/superpowers/plans/)逐 task 做，用 TDD，跑 godot 驗，逐步 commit。★code 寫 worktree，但 handback 寫**唯一 main mailbox**（絕對路徑 `<main-repo>/docs/superpowers/handbacks/`，非你 worktree 的）→ 下一站(measurer/qa/systems)才 live 收到。不改設計/願景/架構。' ;;
+  measurer|量測)
+    ROLE_KEY="measurer"
+    CTX='你是「量測員」(Measurer)。讀職責正典 docs/process/03b_measurer.md（+ 00_roles）。★留 main dir(本 A:\GDS\demo)、禁原地 checkout——跑 branch code 用 `.\tools\godot.ps1 --path .worktrees/<slice> --script ...`。跑 HOB(GODOT_TIMEOUT=600!)/constitution/sanity/TeamTrace ＋★spec §驗收法客製守衛(seeded 產 count/delta)，寫 .measure.json + handback to:qa。★產齊 QA 要判的所有數字(含 spec 守衛)別推 QA。別改 scripts/、別判決(那是 QA)。maker/checker：你產數字，QA 判。timeout≠迴歸要區分。' ;;
+  reviewer|審查)
+    ROLE_KEY="reviewer"
+    CTX='你是「對抗式審查者」(Reviewer) 節點。讀 docs/process/02_reviewer.md + 00_roles.md。skeptical/預設反駁/只信 file:line。factcheck=驗工單前提、review=審 spec。只出 verdict，不修 code/裁 WHAT/改架構。' ;;
+  *)
+    CTX='⚠ SESSION_ROLE 未設。開窗請用 SESSION_ROLE=systems claude 或 SESSION_ROLE=blueprint claude (PowerShell: $env:SESSION_ROLE=...;claude)。先讀 docs/process/00_roles.md 確認你是哪個角色再動工。' ;;
+esac
+
+if [ -n "$ROLE_KEY" ]; then
+  UNREAD="$(scan_handbacks "$ROLE_KEY")"
+  if [ -n "$UNREAD" ]; then
+    CTX="${CTX}
+
+📬 未讀 handback（to: ${ROLE_KEY} / status: open）——讀完消費後改 status: consumed：${UNREAD}"
+  fi
+  # ★全角色 arm 常駐信箱 Monitor。信箱=唯一 main mailbox（hook 已指向 main repo，見上 HANDBACK_DIR）
+  # → worktree 的 implementer 也 arm 得到、watch 同一實體資料夾 → 每站自動讀（含 systems→implementer）。
+  case "$ROLE_KEY" in
+    systems|blueprint|qa|reviewer|measurer|implementer)
+      CTX="${CTX}
+
+★★本 session（含 /clear·/compact 後重觸）的**第一個動作必須**是 arm 常駐信箱 Monitor——**先於任何其他回應/工作**，不等用戶打「arm」，免人肉轉述：
+Monitor(command=\"bash .claude/hooks/inbox-watch.sh\", persistent=true, description=\"${ROLE_KEY} 信箱\")
+arm 完再處理未讀 handback / 用戶請求。別的角色寫 to:${ROLE_KEY} 的信會主動喚醒你。詳 docs/process/07_mailbox_trigger.md。
+
+★★無斷點自動鏈（用戶定 2026-07-09）：收 handback = 做完 + 立刻推下一站（寫下一站信,鏈自動流）。禁自造斷點（park／排隊／下個 session／等下再做）。只為**真需用戶裁決**才停（願景 fork／授權／喬不攏優先序），給具體待裁問題非「要不要繼續/收工」。其餘角色間自動鏈到底。詳 00_roles §無斷點自動鏈。
+
+★★診斷通則：補丁閘優先查（用戶定 2026-07-09）：遇「行為缺失/塌陷/從不 fire/湧現量不到」→ 第一件事查是不是補丁閘（硬 gate/override/continue/絕對門檻 pre-empt 引擎/人格決策）→ 先於猜 tuning/設計沒做/世界本該如此。找到=de-patch（決策交引擎/人格秤）非加補償補丁。詳 00_roles §診斷通則。" ;;
+  esac
+fi
+
+emit "$(json_str "$CTX")"

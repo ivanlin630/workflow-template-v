@@ -1,0 +1,9 @@
+# 機器專屬 local settings（權限白名單/temp 路徑）——不進 template
+.claude/settings.local.json
+
+# LG orchestrator runtime junk
+tools/orchestrator/__pycache__/
+tools/orchestrator/runs/
+tools/orchestrator/.langgraph_api/
+**/__pycache__/
+*.pyc
