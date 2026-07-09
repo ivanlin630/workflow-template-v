@@ -41,5 +41,9 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \".claude/statusline-command.ps1\""
   }
 }

@@ -21,7 +21,8 @@
 | `.claude/hooks/handback-inbox.sh` | UserPromptSubmit 掃未讀信 | 純機制、**免改** |
 | `.claude/hooks/session-role.sh` | SessionStart 依 `$SESSION_ROLE` 注入角色 context | ★**要改**：CTX 字串含來源專案味（godot 等） |
 | `.claude/hooks/layer-check.sh` / `implementer-cleanup.sh` | Edit 護欄 / Stop 清理 | 視需求，可留可刪 |
-| `.claude/settings.json` | hook 接線 | 相對路徑、**免改** |
+| `.claude/settings.json` | hook 接線 + statusLine | 相對路徑、**免改** |
+| `.claude/statusline-command.ps1` | **全域角色狀態列**：渲染 `[藍圖 WHAT]`/`[系統 HOW]`/`[QA]`/`[審查]`/`[實作]`/`[量測]` badge + ctx%/model/cwd/git | ★**Windows/PowerShell**；自足、免改（含可選 caveman badge，無 plugin 則 no-op） |
 | `docs/process/00-08*.md` | 角色定義 / 邊界 / 流程正典 | ★**要改**：內容專案特定，結構可沿用 |
 | `docs/superpowers/handbacks/` | 信箱資料夾 | 空模板 |
 | `tools/orchestrator/*.py` | LG 機器軌（可選） | 需 langgraph；不用可刪 |
