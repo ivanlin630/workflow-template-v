@@ -24,6 +24,7 @@
 | `.claude/settings.json` | hook 接線 + statusLine | 相對路徑、**免改** |
 | `.claude/statusline-command.ps1` | **全域角色狀態列**：渲染 `[藍圖 WHAT]`/`[系統 HOW]`/`[QA]`/`[審查]`/`[實作]`/`[量測]` badge + ctx%/model/cwd/git | ★**Windows/PowerShell**；自足、免改（含可選 caveman badge，無 plugin 則 no-op） |
 | `docs/process/00-08*.md` | 角色定義 / 邊界 / 流程正典 | ★**要改**：內容專案特定，結構可沿用 |
+| `docs/process/09_workflow_principles.md` | **通用方法論**：無斷點自動鏈 / measure-first / 補丁閘優先查 / **框外挑框(降 groupthink)** / 驗收分軌 | ★**免改**：專案無關，先讀這篇懂「為何有效」 |
 | `docs/superpowers/handbacks/` | 信箱資料夾 | 空模板 |
 | `tools/orchestrator/*.py` | LG 機器軌（可選） | 需 langgraph；不用可刪 |
 
