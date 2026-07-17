@@ -40,7 +40,7 @@ case "${SESSION_ROLE:-}" in
     CTX='你是「QA 驗收官」session。讀 docs/process/00_roles.md + 04_qa.md（四職判決）+ 05_acceptance.md（交付前驗收鏈）。管 判決 + release gate:三層機器(矛盾偵測/常駐漏斗/世界句子審計)全綠 + QA 判決才交付。escaped_defects ledger。auto-memory 只讀不寫,教訓走 handback 交系統。不改願景/架構/code。' ;;
   implementer|實作)
     ROLE_KEY="implementer"
-    CTX='你是「實作」(Implementer)。讀 docs/process/03_implementer.md + 00_roles.md。在 worktree 照 systems 的 plan(docs/superpowers/plans/)逐 task 做，用 TDD，跑 godot 驗，逐步 commit。★code 寫 worktree，但 handback 寫**唯一 main mailbox**（絕對路徑 `<main-repo>/docs/superpowers/handbacks/`，非你 worktree 的）→ 下一站(measurer/qa/systems)才 live 收到。不改設計/願景/架構。' ;;
+    CTX='你是「實作」(Implementer)。讀 docs/process/03_implementer.md + 00_roles.md。在 worktree 照 systems 的 plan(docs/superpowers/plans/)逐 task 做，用 TDD，跑 godot 驗，逐步 commit。★code 寫 worktree，但 handback 寫**唯一 main mailbox**（絕對路徑 `<main-repo>/docs/superpowers/handbacks/`，非你 worktree 的）→ 下一站(measurer/qa/systems)才 live 收到。不改設計/願景/架構。★★遇疑問/卡點/設計不明/需裁決 → 寫 to:systems handback 問（systems 是你答疑窗口），**禁在自己終端直接問 user**（user 是問題 backstop 非答疑窗口；直接問=破壞角色鏈）。真需 user 裁的走 to:systems 讓 systems 判該不該升。' ;;
   measurer|量測)
     ROLE_KEY="measurer"
     CTX='你是「量測員」(Measurer)。讀職責正典 docs/process/03b_measurer.md（+ 00_roles）。★留 main dir(本 A:\GDS\demo)、禁原地 checkout——跑 branch code 用 `.\tools\godot.ps1 --path .worktrees/<slice> --script ...`。跑 HOB(GODOT_TIMEOUT=600!)/constitution/sanity/TeamTrace ＋★spec §驗收法客製守衛(seeded 產 count/delta)，寫 .measure.json + handback to:qa。★產齊 QA 要判的所有數字(含 spec 守衛)別推 QA。別改 scripts/、別判決(那是 QA)。maker/checker：你產數字，QA 判。timeout≠迴歸要區分。' ;;
@@ -70,7 +70,9 @@ arm 完再處理未讀 handback / 用戶請求。別的角色寫 to:${ROLE_KEY} 
 
 ★★無斷點自動鏈（用戶定 2026-07-09）：收 handback = 做完 + 立刻推下一站（寫下一站信,鏈自動流）。禁自造斷點（park／排隊／下個 session／等下再做）。只為**真需用戶裁決**才停（願景 fork／授權／喬不攏優先序），給具體待裁問題非「要不要繼續/收工」。其餘角色間自動鏈到底。詳 00_roles §無斷點自動鏈。
 
-★★診斷通則：補丁閘優先查（用戶定 2026-07-09）：遇「行為缺失/塌陷/從不 fire/湧現量不到」→ 第一件事查是不是補丁閘（硬 gate/override/continue/絕對門檻 pre-empt 引擎/人格決策）→ 先於猜 tuning/設計沒做/世界本該如此。找到=de-patch（決策交引擎/人格秤）非加補償補丁。詳 00_roles §診斷通則。" ;;
+★★診斷通則：補丁閘優先查（用戶定 2026-07-09）：遇「行為缺失/塌陷/從不 fire/湧現量不到」→ 第一件事查是不是補丁閘（硬 gate/override/continue/絕對門檻 pre-empt 引擎/人格決策）→ 先於猜 tuning/設計沒做/世界本該如此。找到=de-patch（決策交引擎/人格秤）非加補償補丁。詳 00_roles §診斷通則。
+
+★★reviewer 兩道閘（用戶定 2026-07-10）：無斷點自動鏈 ≠ 跳站——reviewer 是鏈上的站，別直推 implementer。R②=**每 slice 必過**：spec 鎖 → dispatch/merge 前 to:reviewer 審設計，CLEAN 才 dispatch/merge（大框三對齊時升異質框外審）。R①=**僅新概念大框且前提含未驗 code 斷言**：寫 spec 前 to:reviewer factcheck file:line（premise_contradiction→halt）；小 slice/前提已 file:line 坐實則免。詳 01_architect §兩道對抗閘 + 00_roles 接力流向。" ;;
   esac
 fi
 

@@ -13,7 +13,7 @@
 | **系統**（Systems） | **HOW**：seam、契約、所有權圖、invariant、tick pipeline、行政流程 `01_architect.md`| 遊戲願景、平衡意圖 | spec / plan / `invariants.md`|
 | **實作**（Implementer） | worktree 寫 code、跑 sanity 測試 | 設計決定 | code + handback |
 | **量測員**（Measurer） | **留 main dir**（`godot --path .worktrees/<slice>` 對 branch code）跑 HOB/探針/beds **＋ spec §驗收法客製守衛 ＋標準 full_probe 床（acceptance 全維度一次抓齊）** 出**獨立**數字**餵藍圖判**（2026-07-09 起，原餵 QA；藍圖不蹲 godot；★禁原地 checkout）。職責正典 `03b_measurer.md` | 判決、改 code、裁設計 | `.measure.json`/`.fullprobe.json` + handback to:blueprint |
-| **驗收官**（QA） | **★2026-07-09 release-gate 硬閘暫停**（pass 權→藍圖）；能力保留供按需調用：充足性判決/戲感觀者/UI 落差（`04_qa.md`）+ **`escaped_defects.md` ledger 續管**；maker/checker 分離=非蓋房者的腦 | 修 code、裁 WHAT、修 HOW、**自產數字** | 落差清單/稽核 + `escaped_defects.md` 管理 |
+| **驗收官**（QA） | **★2026-07-14 加回=故事性判官**（量測後讀全量 specimen trace 判 motive→action→outcome 鏈=好戲關可稽核閘,餵藍圖;`04_qa.md §第五職`）。**2026-07-09 release-gate 硬閘仍暫停**（pass 權→藍圖;故事性判官≠release-gate）；能力保留供按需調用：充足性判決/戲感觀者/UI 落差 + **`escaped_defects.md` ledger 續管**；maker/checker 分離=非蓋房者的腦 | 修 code、裁 WHAT、修 HOW、**自產數字** | 故事性稽核 + 落差清單 + `escaped_defects.md` 管理 |
 
 **★★2026-07-09 流程改（用戶定案，`blueprint-to-systems-workflow-qa-measurer-change`）**：正式 per-slice **QA release-gate 硬閘砍除**，**release-pass 權 → 藍圖**（沒問題就過、有問題才升用戶；用戶=問題 backstop 非每次交付閘）。每 slice 仍保 **reviewer（對抗審）+ 量測員（標準 full_probe 床全維度數字）**——這兩個才真正 localize regression。QA 能力（充足性稽核/戲感/UI 落差/`escaped_defects` ledger）保留供藍圖按需調用，唯「交用戶前 QA 必綠」硬閘由藍圖 pass 權取代。**綁 user-in-loop：轉自動交付則 QA 硬閘回歸**（見 `04_qa.md` banner + `03b_measurer.md §④` + `05_acceptance.md`）。
 
@@ -24,9 +24,12 @@
 ## 接力流向（同一 feature 不同階段，非同時）
 
 ```
-你 ──願景──> 藍圖(WHAT) ──設計意圖──> 系統(HOW) ──spec──> 實作 ──handback──> 系統
+你 →願景→ 藍圖(WHAT) →意圖→ 【R①factcheck 工單前提】→ 系統(HOW) spec →【R②審 spec=CLEAN】→ 實作 →handback→ 系統(收+驗) → 量測員(全量 dump) → 【QA 故事性稽核】 → 藍圖判(release-pass) → 系統(merge+推下一站)
 ```
 
+- **★量測→QA 故事稽核→藍圖（2026-07-14 加）**：量測員產全量 specimen trace → **QA 讀 trace 判故事性**（motive→action→outcome，`04_qa §第五職`）→ 餵藍圖。聚合 metric 過≠好戲過，需人讀全量 trace。QA 故事性判官≠release-gate（藍圖仍持 release-pass）。互鎖前提=全量暫態可觀測性不變量（`invariants.md`）。
+
+- **★reviewer 是鏈上的站**（`02_reviewer.md` reviewer 讀；系統側閘序見 `01 §兩道對抗閘`）：**R②（審 spec）每 slice 必過，CLEAN 才 dispatch/merge**；**R①（factcheck 前提）只新概念大框且前提含未驗 code 斷言才啟用**（小 slice/已 file:line 坐實則免）。**無斷點自動鏈 ≠ 跳站**——推下一站含推 reviewer②。
 - 同一 feature 不會同時找兩個談：先藍圖定要什麼，再系統定怎麼架。
 - 你「找兩個」只在做**不同 feature 的不同階段** = pipeline，不是腦力衝突。
 
@@ -77,15 +80,18 @@ topic: <一行>
 
 **★裁決信 marker（給 implementer 的完成判定，2026-07-09）**：task 是否完成**由 01/②判決，非 implementer 自判**（QA 可能 redo）。01 判完寫 `to:implementer` 的信，topic 帶 marker：`[DONE]`（approved/merged→implementer 收尾：consume+cd 回主目錄+重 arm；**ctx 靠 auto-compact 不手動清**）或 `[REDO]`（要改→implementer 還 warm 直接改）。**Stop-hook `implementer-cleanup.sh` 據 `[DONE]` 逼收尾**（見 `03_implementer.md §5`）。`/clear` 是用戶鍵入 agent 不能自 issue → 全流程零手動鍵入靠 auto-compact。
 
-生命週期：
-1. 發送方寫 `status: open`。
+生命週期（★status 所有權=收件端，非寄件端；2026-07-13 用戶戳）：
+1. **發送方寫信一律 `status: open`**——不管你自己「做完沒」。open/consumed 表**收件端讀了沒**,非寄件端做完沒。**寄件端絕不自寫 `consumed`**（自寫=收件 Monitor 只掃 open→這封永不被主動喚醒送達→靜默漏看）。「我這輪做完了」=寫一封 open 信給下一站,那封的 consumed 由**下一站**改。詳 `07_mailbox_trigger §status 所有權`。
 2. **每 session 開頭掃 `handbacks/`，讀 `to: 本角色 / status: open` 的**（義務）。
    - **自動 📬（hook，gitignore 本地）**：`SessionStart → session-role.sh`（開頭掃一次）+ `UserPromptSubmit → handback-inbox.sh`（**每 turn 掃**，補 session 中途別角色寫的；空則靜默）。掃 frontmatter `to:$SESSION_ROLE status:open` = 讀真值源，免 QUEUE.md drift。消滅人肉轉述。
    - **★`/clear`·`/compact` 會重觸 SessionStart hook**（`source="clear"/"compact"`）→ `session-role.sh` **自動重注入職責 + arm 指令**。∴ 清 ctx 後職責**自動重載、忘不了**，agent 只需重 arm inbox-watch。**注意**：`/clear` 本身是**用戶鍵入動作**（agent/hook 都不能自 issue）。
-3. 消費後改 `status: consumed`（不刪檔，留軌跡）。
+3. **收件端**讀完動工後才改 `status: consumed`（＝收件簽收回執，不刪檔留軌跡）。**只有收件端改,寄件端從不改自己寄出的信。**
 4. 待決事項的**歸宿仍是 owner doc**：handback 只是載體。例：藍圖裁定殲滅模型 → 寫進 `game-design.md` → handback consumed。系統定 seam → 寫進 `invariants.md`/spec → consumed。
 
 channel 的設計意圖（WHAT）藍圖提、寫進 process doc（HOW）系統做；本節即首個 dogfood（`2026-06-19-blueprint-to-systems-handback-channel.md`）。
+
+### ★角色現況檔（狀態快照，01/系統監控用，用戶定 2026-07-13）
+信箱=工單傳遞;**現況檔=即時狀態快照**（互補非重複）。**02/03/03b/04 各自更** `docs/process/status/<code>_<role>.status.md` 的 frontmatter `status`（idle/working/blocked）+ `current_ticket`——收工單開工標 working+工單、完工回 idle。**01(系統/architect) grep 監控**整體 pipeline（誰忙誰閒免逐一問）：`grep -H -E "^(status|current_ticket):" docs/process/status/0*.status.md`。慣例詳 `status/README.md`。**義務**:各角色開工/完工時順手更新自己那格（一行 frontmatter，低成本）。
 
 ## ★★無斷點自動鏈（用戶定案 2026-07-09，總則）
 
@@ -107,37 +113,49 @@ memory [[feedback-never-wrap]]。
 - 血證：敗北模型（絕對殲滅線 pre-empt 逃決策=殲滅-heavy）、A2c-1（pre-gate `continue` bypass）、arbiter latch（99% 病）。
 - systems characterize / measurer 量不到某湧現 → 都先查補丁閘。併 [[feedback_avoid_rabbithole]]（先量測揭「量不到」）→ 補丁閘優先查揭「為何量不到」。memory [[feedback-patch-gate-first]]。
 
-## 驗收鏈（QA 反轉,2026-07-04；★2026-07-09 user-in-loop 優化）
+## ★★框外挑框：降 groupthink（用戶挖，2026-07-09）
 
-**★2026-07-09（用戶定案）**：user-in-loop 模式下，release-pass 權 → 藍圖（完整 full_probe 數字判、有問題升用戶），正式 QA release-gate 砍。用戶=問題 backstop。**逃逸缺陷仍入 `docs/escaped_defects.md`**（QA 續管，砍 QA 後漏 bug 帳上可見可翻案）。**轉自動交付（用戶不看）→ 三層 QA 硬閘回歸**。
+**根**：判斷層（blueprint/systems）清一色 Opus → 同 priors → 獨立實例也推同一（可能錯）結論。模型多樣（QA/量測 Sonnet、LG Haiku）在**下位機械角色**、defer 上位框架、不挑戰 → 碰不到判斷層。**自我質疑驗得了數據/執行、驗不了自己的框**（同 priors 自驗還是同結論；A2c-1「ironclad regression」數字對詮釋錯，破框靠用戶逼多 seed）。
 
-（下=2026-07-04 舊模型，user-out-of-loop 時適用）**用戶眼球=願景輸入,永遠不是驗收工具。**交付用戶前三層機器全綠（①充足性閾值②常駐漏斗③戲感審計）,判決由驗收官（QA）出。規則本體 見 `05_acceptance.md`。
+**藥：選擇性召異質 skeptic 挑框**（非全審=非浪費）。**★觸發三對齊才召**（其餘直接過）：
+1. 下**強結論且 redirect 大量工作**（建 X / 推翻 Y）；
+2. **相關跳因果**；
+3. **覺得 ironclad/很確定**（高信心=危險信號）+ **難逆**（build/ship/merge）。
+- **放早**（第一次下大框 call 時）prevent 白工（A2c-1 挑框太晚→已白建 survival-value）。
+- **分層省**：便宜先自 steelman 反面（filter）；貴的**異質模型 skeptic** 只給最大 call。
+- **落地=reviewer 承此**：判斷角色下大框 call（三對齊）時召 reviewer，且**★reviewer 用不同模型/代 + prompt 明確 refute（非 confirm）**才有框外效果（同 Opus reviewer=框內審）。詳 `02_reviewer.md`。memory [[feedback_frame_challenge]]（補框外，配 [[feedback_patch_gate_first]]/[[feedback_avoid_rabbithole]] 框內紀律）。
+
+## ★★量測可溯源鐵律（用戶定 2026-07-13，全角色）
+
+**任何角色**（measurer/systems/QA/blueprint…）把數字寫進 handback / doc 前：**原始輸出必先落地成檔**（`docs/measurements/*.log`，非憑記憶轉述）＋**引數字附來源檔:行**＋**標量測當下 commit hash（+`-dirty`）**。裸轉述數字＝違規（日後對不上分不清「過期數字」vs「determinism 壞」，只能重跑）。血教訓：71/22/7% winner 轉述無存檔無 hash → 對不上 main 無法辨真偽。協議本體＝`03b_measurer.md §量測可溯源協議`（measurer 讀），此為跨角色鐵律指標。
+
+## 驗收鏈（一句 + 指標）
+
+user-in-loop 下 release-pass 權→藍圖（full_probe 數字判、有問題升用戶），正式 QA release-gate 砍；**逃逸缺陷仍入 `docs/escaped_defects.md`**；轉自動交付→三層 QA 硬閘回歸。**規則本體=`05_acceptance.md`（QA 讀）**。
 
 ## auto-memory 規則（承 §2）
 
-- **★★兩軌切回後（2026-07-08，現行權威）：auto-memory 單寫者 = 系統 session**（HOW owner，持久、序列化天然單寫）。理由：pipeline 只有藍圖一持久 session（故彼時單寫=藍圖）；兩軌恢復持久角色 session（bp/systems/qa/reviewer）→ 單寫者回系統（承 §2 owner 表 + 原始模型）。**別角色（藍圖/QA/reviewer/實作）教訓走 handback → 系統提煉入 memory**。
-- （下記 pipeline 段=歷史參照，非現行）**pipeline 切換期（2026-07-06~08）：auto-memory 單寫者 = 藍圖 orchestrator session**（持久、序列化=天然單寫）。系統/實作 subagent ephemeral 不寫 memory，教訓走 handback → orchestrator 提煉。以下「系統 session 寫」= 切換前=兩軌後模型（現行）。
-- **（切換前）只有系統 session 寫** auto-memory。藍圖 / 實作只**讀**（harness 開頭自動注入，無需主動讀）。
-- 藍圖 / 實作學到的跨 session 教訓 → 寫進 handback（git doc）→ 系統提煉進 memory。
-- 單寫者 = 零 MEMORY.md race + 教訓經系統過濾，避免各記不一致。
+- **單寫者 = 系統 session**（HOW owner，持久、序列化天然單寫）。別角色（藍圖/QA/reviewer/實作）教訓走 handback → 系統提煉入 memory。
+- 藍圖/實作只**讀**（harness 開頭自動注入，無需主動讀）。單寫者 = 零 MEMORY.md race + 教訓經系統過濾。
 
-## 流程文件地圖（掛勾）
+## 文檔導覽（★單一權威源 + 各角色開場只讀自己那格，降 CTX）
 
-角色/職責/owner/邊界本體在本 doc；細流程分檔：
-- `01_architect.md` — 系統(HOW) 職責 / spec / plan 本體
-- `02_reviewer.md` — 對抗式審查者（factcheck 驗前提 / 審 spec）
-- `03_implementer.md` — worktree 實作 + TDD + handback
-- `03b_measurer.md` — ★量測員（maker 產獨立數字，含 spec §驗收法守衛；≠QA 判）
-- `04_qa.md` — QA 四職判決（充足性/戲感/release gate/UI 落差）
-- `05_acceptance.md` — ★交付前驗收鏈（三層機器全綠=硬閘）
-- `06_pipeline_orchestration.md` — pipeline 編排（藍圖 spawn 下游 subagent）
-- `07_mailbox_trigger.md` — ★信箱主動觸發（多終端 relay，Monitor 喚醒收件 session）
-- `07_orchestrator_machine.md` — langgraph 機器編排說明
-- `08_machine_workflow_v2.md` — 機器 v2 流程 + 01 下游軌（`--from-impl`）
+**規則**：本 doc（00）= 全角色共讀的**唯一共享脊椎**（角色/owner/邊界/接力流向/3 通則）。其餘每 topic **只有一個權威 doc**，別處只指標不重描。
 
-## ★現行偏好（2026-07-08）：多終端信箱 > LG 機器
+| 你是 | 開場只讀 | 該格權威 topic |
+|---|---|---|
+| 系統(HOW) | 00 + **01** + **流程 owner 全 doc（02-08）** | spec/plan/3 層/dispatch 閘序 + **流程 doc owner** |
+| 藍圖(WHAT) | 00 + `game-design.md` | 願景/feature/平衡（無專屬流程 doc） |
+| 實作 | 00 + **03** | worktree/TDD/handback |
+| 量測員 | 00 + **03b** | 獨立數字/守衛床（≠QA 判） |
+| QA | 00 + **04** + **05** | 判決 / 驗收鏈規則 |
+| reviewer | 00 + **02** | 兩道對抗閘 factcheck/review |
 
-用戶現**傾向多終端信箱 relay 為主軌**（各角色持久 session + Monitor 主動觸發，見 `07_mailbox_trigger.md`），**langgraph 機器少用**——只在大/並行活才上；輕/序列/設計來回一律走信箱。動機：機器誤判（A2a 假 perf reject）+ 燒錢（$27/slice）。兩軌並存但預設走信箱。
+**操作工作流（信箱 relay = 全角色每天操作的本體，非選讀）**：
+- **操作精髓已 hook inline**（`session-role.sh`：開場 arm Monitor 信箱 + 無斷點自動鏈）→ 全角色開場自動得，**不必主動讀 07**。
+- **全文 = 系統讀**（流程 doc owner）：`07_mailbox_trigger.md`（信箱機制細節）。**現行預設軌**=各角色持久 session + Monitor 觸發。
+- langgraph 機器軌（**少用**，只大/並行活；動機=機器誤判 A2a + $27/slice；含下游 LG `--from-impl` 可選）→ `08_machine_workflow_v2.md`（系統讀；`07_orchestrator_machine.md`=設計背景）。
+- ~~`06_pipeline_orchestration.md`~~ **作廢**（全 pipeline 藍圖 orchestrator 模型；2026-07-08 切回多終端已 revert；留史）。
 
 ## 你的負擔
 
