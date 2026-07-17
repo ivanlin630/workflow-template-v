@@ -25,12 +25,13 @@
 | `.claude/statusline-command.ps1` | **全域角色狀態列**：渲染 `[藍圖 WHAT]`/`[系統 HOW]`/`[QA]`/`[審查]`/`[實作]`/`[量測]` badge + ctx%/model/cwd/git | ★**Windows/PowerShell**；自足、免改（含可選 caveman badge，無 plugin 則 no-op） |
 | `docs/process/00-08*.md` | 角色定義 / 邊界 / 流程正典 | ★**要改**：內容專案特定，結構可沿用 |
 | `docs/process/09_workflow_principles.md` | **通用方法論**：無斷點自動鏈 / measure-first / 補丁閘優先查 / **框外挑框(降 groupthink)** / 驗收分軌 | ★**免改**：專案無關，先讀這篇懂「為何有效」 |
+| `docs/process/status/` | **角色現況檔**：各角色自更 `<code>_<role>.status.md`（idle/working/blocked + 當前工單）；系統 grep 監控整體 pipeline | 純機制 + reset 模板、**免改**（慣例見該 dir README） |
 | `docs/superpowers/handbacks/` | 信箱資料夾 | 空模板 |
 | `tools/orchestrator/*.py` | LG 機器軌（可選） | 需 langgraph；不用可刪 |
 
 ## 套用到新專案
 
-1. **複製** `.claude/`、`docs/process/`、`docs/superpowers/handbacks/`（+ 選 `tools/orchestrator/`）進你的 repo。
+1. **複製** `.claude/`、`docs/process/`（含 `status/`）、`docs/superpowers/handbacks/`（+ 選 `tools/orchestrator/`）進你的 repo。
 2. **改** `session-role.sh` 各角色 CTX 字串 + `docs/process/*.md` → 換成你專案的指令/工具/邊界（現版是 Godot sim 味）。
 3. **開角色 session**（各一終端）：
    ```
