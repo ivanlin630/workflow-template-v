@@ -29,6 +29,26 @@
             "command": "bash .claude/hooks/layer-check.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/bash-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/longrun-qa-gate.sh"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -36,14 +56,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/implementer-cleanup.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/implementer-cleanup.sh\""
           }
         ]
       }
     ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \".claude/statusline-command.ps1\""
   }
 }
